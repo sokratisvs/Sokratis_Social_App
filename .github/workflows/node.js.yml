@@ -1,0 +1,39 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Lighthouse CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  lighthouse_audit:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - run: npm run build --if-present
+    - name: Audit URLs using Lighthouse
+      uses: treosh/lighthouse-ci-action@master
+      with:
+        urls: |
+          https://localhost:8080/
+        configPath: ./lighthouserc.json
+    - name: Save results
+      uses: actions/upload-artifact@v1
+      with:
+        name: lighthouse-results
+        path: '.lighthouseci' # This will save the Lighthouse results as .json files
